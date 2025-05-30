@@ -149,32 +149,54 @@ if df is not None:
             model = sm.OLS(y, X).fit()
             st.write(model.summary())
 
+
     elif section == "Harta (geopandas)":
-        st.subheader("Harta Startup-urilor pe Regiuni")
+
+        st.subheader("🗺️ Harta Startup-urilor pe Regiuni")
 
         try:
 
-
             region_coords = {
-                "Europe": (50.1109, 8.6821),         # Frankfurt
-                "North America": (37.7749, -122.4194), # San Francisco
-                "South America": (-23.5505, -46.6333), # Sao Paulo
-                "Asia": (35.6895, 139.6917),          # Tokyo
-                "Australia": (-33.8688, 151.2093),    # Sydney
+
+                "Europe": (50.1109, 8.6821),
+
+                "North America": (37.7749, -122.4194),
+
+                "South America": (-23.5505, -46.6333),
+
+                "Asia": (35.6895, 139.6917),
+
+                "Australia": (-33.8688, 151.2093),
+
             }
 
             if "Region" not in df.columns:
+
                 st.error("Coloana 'Region' nu exista in setul de date.")
+
             else:
+
                 df['Latitude'] = df['Region'].map(lambda x: region_coords.get(x, (0, 0))[0])
+
                 df['Longitude'] = df['Region'].map(lambda x: region_coords.get(x, (0, 0))[1])
-                map_df = df[['Latitude', 'Longitude']].copy()
-                map_df = map_df.rename(columns={"Latitude": "latitude", "Longitude": "longitude"})
-                st.map(map_df)
+
+                df['geometry'] = df.apply(lambda row: Point(row['Longitude'], row['Latitude']), axis=1)
+
+                gdf = gpd.GeoDataFrame(df, geometry='geometry', crs='EPSG:4326')
+
+                fig, ax = plt.subplots(figsize=(8, 5))
+
+                gdf.plot(ax=ax, color='blue', markersize=80)
+
+                ax.set_title("Harta startup-urilor (puncte simple)")
+
+                ax.set_xlabel("Longitude")
+
+                ax.set_ylabel("Latitude")
+
+                st.pyplot(fig)
+
 
         except Exception as e:
-            st.error(f"Nu s-a putut incarca harta: {e}")
 
-
-
-
+            st.error(f"Nu s-a putut încărca harta cu geopandas: {e}")
